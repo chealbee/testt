@@ -1,0 +1,78 @@
+.game {
+  background: #767676;
+  padding-top: 20px;
+  padding-bottom: 30px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  flex-direction: column;
+}
+
+.gameWraper {
+  max-width: 500px;
+  width: 100%;
+  background: #464646;
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.loos {
+  padding: 20px;
+  background: #0000005d;
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+  color: #ffffff;
+}
+.screen {
+  position: relative;
+  background: #8ed4ff;
+  width: 100%;
+  height: 500px;
+  flex: 0 0 500px;
+  color: rgb(0, 0, 0);
+  p {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+}
+.gameHeading {
+  text-align: center;
+  font-size: 35px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.gameStartingform {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  &__input {
+    border: 1px solid #000000;
+    padding: 5px;
+    border-radius: 5px;
+  }
+  button {
+    color: white;
+    padding: 10px 20px;
+    background: #000000;
+  }
+}
+.errText {
+  color: red;
+  text-transform: uppercase;
+  text-align: center;
+}
