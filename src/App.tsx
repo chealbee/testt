@@ -16,15 +16,18 @@ import GameForm from "./components/game/form/GameForm";
 import { useGamehistory } from "./stores/GameHistoryStore";
 
 function App() {
-  const timerId = useRef<number>();
+  const animationFrameId = useRef<number>();
   const addGameHistory = useGamehistory((state) => state.addGameHistory);
   const [gameHight] = useState(500);
   const [gameStatus, setGameStatus] = useState<
     "goin" | "not started" | "loading" | "win" | "loss"
   >("not started");
   const [timer, setTimer] = useState(0);
-  const [speed, setSpeed] = useState(100);
+  const [timerMulti, setTimerMulti] = useState(5);
+  const [speed, setSpeed] = useState(1);
   const [score, setScore] = useState(0);
+  const [verticalSpeed, setVerticalSpeed] = useState(1);
+  const [horizontallSpeed, setHorizontallSpeed] = useState(0);
 
   const [isFormValid, setIsFormValid] = useState<boolean>(true);
   const { handleCloseModal, handleOpenModal, isModalOpen } = useModal();
@@ -38,7 +41,6 @@ function App() {
     setDronePosition,
   } = useDrone();
 
-  // отримуєсо дані і статртуємо
   const startGameIfFormValid = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData.name || !formData.difficulty) {
@@ -55,14 +57,12 @@ function App() {
     }
   };
 
-  // стартуємо коли є достатньо стіни і ставим дрон
   useEffect(() => {
     if (
       wallCoordinats.left.length == Math.ceil(gameHight / formData.wallHight)
     ) {
       setGameStatus("goin");
     }
-    // ставимо дрон посеред печери якщо початок не по середині екрану
     if (wallCoordinats.left.length == 2) {
       setDronePosition((wallCoordinats.left[1] + wallCoordinats.right[1]) / 2);
     }
@@ -70,34 +70,19 @@ function App() {
     gameHight,
     wallCoordinats.left,
     formData,
-    moveDrone,
     wallCoordinats.right,
     setDronePosition,
   ]);
 
-  // перевіряємо чи не врізались в стіну
   const checkCollision = useCallback(() => {
-    if (gameStatus != "goin") return;
-    // алгротним переврки простий ми перевіряємо при "кожному" рендері
-    // чи координати країв дрона, ніс дрона та боки не дорівньоють або більші\менші координатам  стіни
-    // також ми перевірямо чи координати дрона не більші або менші томущо при натискані ми рухаємо
-    // томущо умовно задньої частини дрона 190px а стіни 189px і ми рухаємо на 5px в ліво при настику і отримуємо 185
+    if (gameStatus !== "goin") return;
 
-    // ніс дрона
     const topCoordsOfDroneByY = Math.floor(droneSize / formData.wallHight);
-
-    // задня бокова частина  (підходить для лівої і права)
     const leftOrRightCoordsOfDroneByY = Math.floor(
       droneOffsettoTop / formData.wallHight
     );
-
-    // координати від середини дрона по x (задня(верхня) бокова частина)
     const leftOrRightCoordsOfDroneByX = (droneSize - droneOffsettoTop) / 2;
-
-    // координати від середини дрона по x (середина боку дрона)
     const midleCoordsOfDroneByY = Math.ceil((droneSize - droneOffsettoTop) / 4);
-
-    // середня частина половини дрона по X (середня частина біку)
     const midleCoordsOfDroneByx = Math.floor(
       (Math.floor(droneSize / formData.wallHight) +
         Math.floor(droneOffsettoTop / formData.wallHight)) /
@@ -106,39 +91,51 @@ function App() {
 
     const checkCollision = (condition: boolean, text: string) => {
       if (condition) {
-        clearInterval(timerId.current);
+        cancelAnimationFrame(animationFrameId.current);
         setGameStatus("loss");
         console.log(`${text} collision`);
       }
     };
 
     checkCollision(
-      wallCoordinats.left[topCoordsOfDroneByY + timer] >= dronePosition,
-      "drone nose colibe left wall"
+      wallCoordinats.left[
+        topCoordsOfDroneByY + Math.floor(timer / timerMulti)
+      ] >= dronePosition,
+      "drone nose collide left wall"
     );
     checkCollision(
-      wallCoordinats.right[topCoordsOfDroneByY + timer] <= dronePosition,
-      "drone nose colibe right wall"
+      wallCoordinats.right[
+        topCoordsOfDroneByY + Math.floor(timer / timerMulti)
+      ] <= dronePosition,
+      "drone nose collide right wall"
     );
     checkCollision(
-      wallCoordinats.right[timer + leftOrRightCoordsOfDroneByY] <=
+      wallCoordinats.right[
+        Math.floor(timer / timerMulti) + leftOrRightCoordsOfDroneByY
+      ] <=
         dronePosition + leftOrRightCoordsOfDroneByX,
-      "drone right back colibe right wall"
+      "drone right back collide right wall"
     );
     checkCollision(
-      wallCoordinats.left[timer + leftOrRightCoordsOfDroneByY] >=
+      wallCoordinats.left[
+        Math.floor(timer / timerMulti) + leftOrRightCoordsOfDroneByY
+      ] >=
         dronePosition - leftOrRightCoordsOfDroneByX,
-      "drone left back colibe left wall"
+      "drone left back collide left wall"
     );
     checkCollision(
-      wallCoordinats.left[midleCoordsOfDroneByx + timer] >=
+      wallCoordinats.left[
+        midleCoordsOfDroneByx + Math.floor(timer / timerMulti)
+      ] >=
         dronePosition - midleCoordsOfDroneByY,
-      "drone left side colibe left wall"
+      "drone left side collide left wall"
     );
     checkCollision(
-      wallCoordinats.right[midleCoordsOfDroneByx + timer] <=
+      wallCoordinats.right[
+        midleCoordsOfDroneByx + Math.floor(timer / timerMulti)
+      ] <=
         dronePosition + midleCoordsOfDroneByY,
-      "drone right side colibe right wall"
+      "drone right side collide right wall"
     );
   }, [
     gameStatus,
@@ -151,12 +148,10 @@ function App() {
     dronePosition,
   ]);
 
-  // викликаємо перевірку чи не врізались
   useEffect(() => {
     checkCollision();
   }, [timer, dronePosition, checkCollision]);
 
-  // рухаємо дрон
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (gameStatus !== "goin") return;
@@ -164,60 +159,68 @@ function App() {
 
       switch (event.key) {
         case "ArrowLeft":
-          moveDrone(-formData.droneSpeed);
+          setHorizontallSpeed((prev) => {
+            if (prev > 0) return -0.1;
+            return Math.max(prev - 0.1, -2);
+          });
           break;
         case "ArrowRight":
-          moveDrone(formData.droneSpeed);
+          setHorizontallSpeed((prev) => {
+            if (prev < 0) return 0.1;
+            return Math.min(prev + 0.1, 2);
+          });
           break;
         case "ArrowDown":
-          setSpeed((prev) => Math.max(20, prev - 10));
+          setVerticalSpeed((prev) => Math.max(0, prev - 0.1));
           break;
         case "ArrowUp":
-          setSpeed((prev) => Math.min(100, prev + 10));
+          setVerticalSpeed((prev) => Math.min(1, prev + 0.1));
           break;
       }
     },
     [gameStatus, moveDrone, setSpeed, formData]
   );
 
-  // рухаємо дрон
   useEffect(() => {
-    console.log("FFFF");
-
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyDown]);
 
-  // таймер
-  useEffect(() => {
+  const gameLoop = useCallback(() => {
     if (gameStatus !== "goin") return;
+    moveDrone(horizontallSpeed);
+    setTimer((prev) => {
+      return prev + 1 - verticalSpeed;
+    });
 
-    timerId.current = setInterval(() => {
-      setScore((prev) =>
-        Math.floor(prev + formData.difficulty / (speed / 500))
-      );
-      setTimer((prev) => prev + 1);
-    }, speed);
+    animationFrameId.current = requestAnimationFrame(gameLoop);
+  }, [gameStatus, speed, verticalSpeed, horizontallSpeed]);
+
+  useEffect(() => {
+    if (gameStatus === "goin") {
+      animationFrameId.current = requestAnimationFrame(gameLoop);
+    }
 
     return () => {
-      clearInterval(timerId.current);
+      cancelAnimationFrame(animationFrameId.current);
     };
-  }, [gameStatus, speed, formData]);
+  }, [gameStatus, gameLoop]);
 
-  // зупиняємо якщо все пролетіли (ми вигралм)
   useEffect(() => {
     if (
       wallCoordinats.left.length > gameHight / formData.wallHight &&
-      timer >= wallCoordinats.left.length
+      Math.floor(timer / timerMulti) >= wallCoordinats.left.length
     ) {
       setGameStatus("win");
-      clearInterval(timerId.current);
-      if (gameStatus !== "win")
+      cancelAnimationFrame(animationFrameId.current);
+      if (gameStatus !== "win") {
         addGameHistory(formData.name, score, formData.difficulty);
+      }
     }
   }, [
+    speed,
     wallCoordinats.left,
     timer,
     gameHight,
@@ -225,7 +228,14 @@ function App() {
     addGameHistory,
     score,
     gameStatus,
+    timerMulti,
   ]);
+  //
+  //
+  //
+  //
+  //
+  //
 
   return (
     <>
@@ -238,7 +248,7 @@ function App() {
                 <polyline
                   points={createWalls(
                     wallCoordinats,
-                    timer,
+                    Math.floor(timer / timerMulti),
                     formData.wallHight
                   )}
                   fill="white"
@@ -274,5 +284,3 @@ function App() {
 }
 
 export default App;
-
-// переробити рух
