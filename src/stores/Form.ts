@@ -1,15 +1,39 @@
 import { create } from "zustand";
 
 interface IUseForm {
-  name: string;
-  difficulty: number;
+  formData: {
+    name: string;
+    difficulty: number;
+    droneSpeed: number;
+    wallHight: number;
+    saveLost: boolean;
+  };
 
-  setFormData: (name: string, difficulty: number) => void;
+  setFormData: (formData: {
+    name: string;
+    difficulty: number;
+    droneSpeed: number;
+    wallHight: number;
+    saveLost: boolean;
+  }) => void;
 }
+
 export const useForm = create<IUseForm>((set) => ({
-  name: "",
-  difficulty: 1,
-  setFormData: (name, difficulty) => {
-    set({ name, difficulty });
+  formData: {
+    name: "",
+    difficulty: 1,
+    droneSize: 40,
+    droneSpeed: 7,
+    wallHight: 10,
+    saveLost: false,
+  },
+  setFormData: (formData: {
+    name: string;
+    difficulty: number;
+    droneSpeed: number;
+    wallHight: number;
+    saveLost: boolean;
+  }) => {
+    set({ formData: { ...formData } });
   },
 }));

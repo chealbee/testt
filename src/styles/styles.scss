@@ -82,3 +82,18 @@
   text-transform: uppercase;
   text-align: center;
 }
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+.separator {
+  height: 3px;
+  background: #c0c0c0;
+  width: 100%;
+}
+.PopuHeading {
+  text-align: center;
+  color: #000000;
+  text-transform: uppercase;
+}

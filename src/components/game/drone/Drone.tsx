@@ -3,7 +3,6 @@ import { SVGProps } from "react";
 interface IDrone extends SVGProps<SVGPolygonElement> {
   dronePosition: number;
   droneSize: number;
-  droneWidth: number;
   droneOffsettoTop: number;
 }
 

@@ -12,50 +12,54 @@ import { useDrone } from "./stores/Drone";
 import { useForm } from "./stores/Form";
 import { createWalls } from "./utils/wall/createWall";
 import renderGameStatus from "./components/game/gameStatus/GameStatus";
+import GameForm from "./components/game/form/GameForm";
+import { useGamehistory } from "./stores/GameHistoryStore";
 
 function App() {
   const timerId = useRef<number>();
-  const [wallHight, setWallHight] = useState(20);
+  const addGameHistory = useGamehistory((state) => state.addGameHistory);
   const [gameHight] = useState(500);
   const [gameStatus, setGameStatus] = useState<
     "goin" | "not started" | "loading" | "win" | "loss"
   >("not started");
   const [timer, setTimer] = useState(0);
-  const [speed, setSpeed] = useState(200);
+  const [speed, setSpeed] = useState(100);
   const [score, setScore] = useState(0);
 
   const [isFormValid, setIsFormValid] = useState<boolean>(true);
   const { handleCloseModal, handleOpenModal, isModalOpen } = useModal();
-  const { difficulty, name, setFormData } = useForm();
+  const formData = useForm((state) => state.formData);
   const { wallCoordinats, startGame, resetWallCoords } = useStartGame();
   const {
     dronePosition,
     droneOffsettoTop,
-    droneWidth,
     droneSize,
     moveDrone,
-    setDroneSize,
     setDronePosition,
   } = useDrone();
 
   // отримуєсо дані і статртуємо
   const startGameIfFormValid = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const isValid = !!name && !!difficulty;
-    setIsFormValid(isValid);
-
-    setGameStatus("loading");
-    setScore(0);
-    setSpeed(200);
-    setTimer(0);
-    handleCloseModal();
-    resetWallCoords();
-    startGame({ difficulty, name });
+    if (!formData.name || !formData.difficulty) {
+      setIsFormValid(false);
+    } else {
+      setIsFormValid(true);
+      setGameStatus("loading");
+      setScore(0);
+      setSpeed(100);
+      setTimer(0);
+      handleCloseModal();
+      resetWallCoords();
+      startGame({ difficulty: formData.difficulty, name: formData.name });
+    }
   };
 
   // стартуємо коли є достатньо стіни і ставим дрон
   useEffect(() => {
-    if (wallCoordinats.left.length == Math.ceil(gameHight / wallHight)) {
+    if (
+      wallCoordinats.left.length == Math.ceil(gameHight / formData.wallHight)
+    ) {
       setGameStatus("goin");
     }
     // ставимо дрон посеред печери якщо початок не по середині екрану
@@ -65,7 +69,7 @@ function App() {
   }, [
     gameHight,
     wallCoordinats.left,
-    wallHight,
+    formData,
     moveDrone,
     wallCoordinats.right,
     setDronePosition,
@@ -73,18 +77,18 @@ function App() {
 
   // перевіряємо чи не врізались в стіну
   const checkCollision = useCallback(() => {
-    if (gameStatus !== "goin") return;
+    if (gameStatus != "goin") return;
     // алгротним переврки простий ми перевіряємо при "кожному" рендері
     // чи координати країв дрона, ніс дрона та боки не дорівньоють або більші\менші координатам  стіни
     // також ми перевірямо чи координати дрона не більші або менші томущо при натискані ми рухаємо
     // томущо умовно задньої частини дрона 190px а стіни 189px і ми рухаємо на 5px в ліво при настику і отримуємо 185
 
     // ніс дрона
-    const topCoordsOfDroneByY = Math.floor(droneSize / wallHight);
+    const topCoordsOfDroneByY = Math.floor(droneSize / formData.wallHight);
 
     // задня бокова частина  (підходить для лівої і права)
     const leftOrRightCoordsOfDroneByY = Math.floor(
-      droneOffsettoTop / wallHight
+      droneOffsettoTop / formData.wallHight
     );
 
     // координати від середини дрона по x (задня(верхня) бокова частина)
@@ -95,8 +99,8 @@ function App() {
 
     // середня частина половини дрона по X (середня частина біку)
     const midleCoordsOfDroneByx = Math.floor(
-      (Math.floor(droneSize / wallHight) +
-        Math.floor(droneOffsettoTop / wallHight)) /
+      (Math.floor(droneSize / formData.wallHight) +
+        Math.floor(droneOffsettoTop / formData.wallHight)) /
         2
     );
 
@@ -137,14 +141,14 @@ function App() {
       "drone right side colibe right wall"
     );
   }, [
-    dronePosition,
-    droneOffsettoTop,
-    droneSize,
     gameStatus,
-    timer,
+    droneSize,
+    formData.wallHight,
+    droneOffsettoTop,
     wallCoordinats.left,
     wallCoordinats.right,
-    wallHight,
+    timer,
+    dronePosition,
   ]);
 
   // викликаємо перевірку чи не врізались
@@ -160,10 +164,10 @@ function App() {
 
       switch (event.key) {
         case "ArrowLeft":
-          moveDrone(-7);
+          moveDrone(-formData.droneSpeed);
           break;
         case "ArrowRight":
-          moveDrone(7);
+          moveDrone(formData.droneSpeed);
           break;
         case "ArrowDown":
           setSpeed((prev) => Math.max(20, prev - 10));
@@ -173,42 +177,55 @@ function App() {
           break;
       }
     },
-    [gameStatus, moveDrone, setSpeed]
+    [gameStatus, moveDrone, setSpeed, formData]
   );
 
   // рухаємо дрон
   useEffect(() => {
+    console.log("FFFF");
+
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [gameStatus, handleKeyDown]);
+  }, [handleKeyDown]);
 
   // таймер
   useEffect(() => {
     if (gameStatus !== "goin") return;
 
     timerId.current = setInterval(() => {
-      setScore((prev) => Math.floor(prev + difficulty / (speed / 500)));
+      setScore((prev) =>
+        Math.floor(prev + formData.difficulty / (speed / 500))
+      );
       setTimer((prev) => prev + 1);
     }, speed);
 
     return () => {
       clearInterval(timerId.current);
     };
-  }, [gameStatus, speed, difficulty]);
+  }, [gameStatus, speed, formData]);
 
   // зупиняємо якщо все пролетіли (ми вигралм)
   useEffect(() => {
     if (
-      wallCoordinats.left.length > gameHight / wallHight &&
+      wallCoordinats.left.length > gameHight / formData.wallHight &&
       timer >= wallCoordinats.left.length
     ) {
       setGameStatus("win");
       clearInterval(timerId.current);
+      if (gameStatus !== "win")
+        addGameHistory(formData.name, score, formData.difficulty);
     }
-  }, [wallCoordinats.left, timer, gameHight, wallHight]);
-  // зупиняємо якщо все пролетіли (ми вигралм)
+  }, [
+    wallCoordinats.left,
+    timer,
+    gameHight,
+    formData,
+    addGameHistory,
+    score,
+    gameStatus,
+  ]);
 
   return (
     <>
@@ -219,12 +236,15 @@ function App() {
             {gameStatus === "goin" || gameStatus === "loss" ? (
               <svg width={500} height={500}>
                 <polyline
-                  points={createWalls(wallCoordinats, timer, wallHight)}
+                  points={createWalls(
+                    wallCoordinats,
+                    timer,
+                    formData.wallHight
+                  )}
                   fill="white"
                 />
                 <Drone
                   dronePosition={dronePosition}
-                  droneWidth={droneWidth}
                   droneSize={droneSize}
                   droneOffsettoTop={droneOffsettoTop}
                 />
@@ -232,7 +252,6 @@ function App() {
             ) : null}
             {renderGameStatus(gameStatus, score)}
           </div>
-          {/* переробити умовні відмалювання */}
           {gameStatus === "goin" && (
             <GameDataScreen
               score={score}
@@ -248,55 +267,12 @@ function App() {
         </div>
       </div>
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <form
-          className="gameStartingform"
-          onSubmit={(e) => startGameIfFormValid(e)}
-        >
-          {!isFormValid && <p className="errText">form unvalid</p>}
-          <p>Enter player name: {name}</p>
-          <input
-            type="text"
-            className="gameStartingform__input"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setFormData(e.target.value, difficulty)}
-          />
-          <p>Select game difficulty: {difficulty}</p>
-          <input
-            value={difficulty}
-            onChange={(e) => setFormData(name, +e.target.value)}
-            type="range"
-            max={10}
-            min={1}
-            defaultValue={1}
-            step={1}
-            placeholder="enter name"
-          />
-          <p>size of the drone: {droneSize}</p>
-          <input
-            value={droneSize}
-            onChange={(e) => setDroneSize(+e.target.value)}
-            type="range"
-            max={100}
-            min={30}
-            defaultValue={40}
-            step={10}
-          />
-          <p>size of the walls: {wallHight}</p>
-          <input
-            value={wallHight}
-            onChange={(e) => setWallHight(+e.target.value)}
-            type="range"
-            max={15}
-            min={3}
-            defaultValue={10}
-            step={1}
-          />
-          <button>start game</button>
-        </form>
+        <GameForm isFormValid={isFormValid} onSubmit={startGameIfFormValid} />
       </Modal>
     </>
   );
 }
 
 export default App;
+
+// переробити рух

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface state {
   historyList: {
@@ -11,13 +12,17 @@ interface actions {
   addGameHistory: (name: string, score: number, difficulty: number) => void;
 }
 
-export const useGamehistory = create<state & actions>((set) => ({
-  historyList: [
-    { name: "zakharii", score: 123, difficulty: 5 },
-    { name: "ivan", score: 13, difficulty: 10 },
-  ],
-  addGameHistory: (name, score, difficulty) =>
-    set((state) => ({
-      historyList: [...state.historyList, { name, score, difficulty }],
-    })),
-}));
+export const useGamehistory = create(
+  persist<state & actions>(
+    (set) => ({
+      historyList: [],
+      addGameHistory: (name, score, difficulty) =>
+        set((state) => ({
+          historyList: [...state.historyList, { name, score, difficulty }],
+        })),
+    }),
+    {
+      name: "hostory-of-games",
+    }
+  )
+);

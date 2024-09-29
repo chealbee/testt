@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 interface IUseDrone {
   droneOffsettoTop: number;
-  droneWidth: number;
+
   droneSize: number;
   dronePosition: number;
   moveDrone: (position: number) => void;
@@ -11,7 +11,6 @@ interface IUseDrone {
 }
 export const useDrone = create<IUseDrone>((set) => ({
   droneOffsettoTop: 20,
-  droneWidth: 20,
   dronePosition: 250,
   droneSize: 40,
 
