@@ -121,6 +121,17 @@ function App() {
         dronePosition + (droneSize - droneOffsettoTop) / 2
       ) {
         console.log("right colibe right");
+        //   console.log(Math.floor(droneOffsettoTop / wallHight));
+        //   //   console.log(1, Math.floor((droneSize - droneOffsettoTop) / wallHight));
+        //   console.log(
+        //     Math.floor(
+        //       (Math.floor(droneSize / wallHight) +
+        //         Math.floor(droneOffsettoTop / wallHight)) /
+        //         2
+        //     )
+        //   );
+        //   console.log(Math.floor(droneSize / wallHight));
+
         clearInterval(timerId.current);
         setGameStatus("loss");
       }
@@ -135,9 +146,13 @@ function App() {
       // для перевірки зіткнення боком
       if (
         wallCoordinats.left[
-          Math.ceil((droneSize - droneOffsettoTop) / wallHight) + timer
+          Math.floor(
+            (Math.floor(droneSize / wallHight) +
+              Math.floor(droneOffsettoTop / wallHight)) /
+              2
+          ) + timer
         ] >=
-        dronePosition - Math.ceil((droneSize - droneOffsettoTop) / 2) / 2
+        dronePosition - Math.ceil((droneSize - droneOffsettoTop) / 4)
       ) {
         console.log("left side colibe left");
         clearInterval(timerId.current);
@@ -145,7 +160,11 @@ function App() {
       }
       if (
         wallCoordinats.right[
-          Math.ceil((droneSize - droneOffsettoTop) / wallHight) + timer
+          Math.floor(
+            (Math.floor(droneSize / wallHight) +
+              Math.floor(droneOffsettoTop / wallHight)) /
+              2
+          ) + timer
         ] <=
         dronePosition + Math.ceil((droneSize - droneOffsettoTop) / 2) / 2
       ) {
