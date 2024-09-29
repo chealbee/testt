@@ -14,8 +14,9 @@ import { createWalls } from "./utils/wall/createWall";
 
 function App() {
   const timerId = useRef<number>();
-  const [wallHight, setWallHight] = useState(10);
+  const [wallHight, setWallHight] = useState(20);
   const [gameHight, setGameHight] = useState(500);
+  //   const [gameWidth, setGameWidth] = useState(500);
   const [gameStatus, setGameStatus] = useState<
     "goin" | "not started" | "loading" | "win" | "loss"
   >("not started");
@@ -31,8 +32,9 @@ function App() {
     droneOffsettoTop,
     droneWidth,
     droneSize,
-    setDronePosition,
+    moveDrone,
     setDroneSize,
+    setDronePosition,
   } = useDrone();
 
   //   отримуєсо дані і статртуємо
@@ -46,7 +48,7 @@ function App() {
       setScore(0);
       setSpeed(100);
       setTimer(0);
-      setDronePosition("base");
+      moveDrone("base");
       handleCloseModal();
       resetWallCoords();
 
@@ -63,12 +65,25 @@ function App() {
       );
     }
   };
-  // стартуємо коли є достатньо стіни
+  // стартуємо коли є достатньо стіни і ставим дрон
   useEffect(() => {
-    if (wallCoordinats.left.length == gameHight / wallHight) {
+    if (wallCoordinats.left.length == Math.ceil(gameHight / wallHight)) {
       setGameStatus("goin");
     }
-  }, [gameHight, wallCoordinats.left, wallHight]);
+    // ставимо дрон почсеред печери якщо початок не по середині екрану
+    if (wallCoordinats.left.length == 2) {
+      setDronePosition((wallCoordinats.left[0] + wallCoordinats.right[0]) / 2);
+    }
+  }, [
+    gameHight,
+    wallCoordinats.left,
+    wallHight,
+    moveDrone,
+    wallCoordinats.right,
+    setDronePosition,
+  ]);
+  // стартуємо коли є достатньо стіни і ставим дрон
+
   //   отримуєсо дані і статртуємо
 
   // перевіряємо чи не врізались
@@ -81,28 +96,37 @@ function App() {
     // цими перевіряємо зіткнення передом та зайдніми краями
     if (gameStatus == "goin") {
       // для перевірки зіткнення переду
-      if (wallCoordinats.left[droneSize / 10 + timer] >= dronePosition) {
+      if (
+        wallCoordinats.left[Math.floor(droneSize / wallHight) + timer] >=
+        dronePosition
+      ) {
         console.log("nose colibe left");
         clearInterval(timerId.current);
         setGameStatus("loss");
       }
-      if (wallCoordinats.right[droneSize / 10 + timer] <= dronePosition) {
+      if (
+        wallCoordinats.right[Math.floor(droneSize / wallHight) + timer] <=
+        dronePosition
+      ) {
         console.log("nose colibe right");
         clearInterval(timerId.current);
         setGameStatus("loss");
       }
       // для перевірки зіткнення задніх частин
       if (
-        wallCoordinats.right[timer + droneOffsettoTop / wallHight] <=
-        dronePosition + (droneSize - 20) / 2
+        // замінити перевірку яка точка щоб учитовало висоту стіни
+        wallCoordinats.right[
+          timer + Math.floor(droneOffsettoTop / wallHight)
+        ] <=
+        dronePosition + (droneSize - droneOffsettoTop) / 2
       ) {
         console.log("right colibe right");
         clearInterval(timerId.current);
         setGameStatus("loss");
       }
       if (
-        wallCoordinats.left[timer + droneOffsettoTop / 10] >=
-        dronePosition - (droneSize - 20) / 2
+        wallCoordinats.left[timer + Math.floor(droneOffsettoTop / wallHight)] >=
+        dronePosition - (droneSize - droneOffsettoTop) / 2
       ) {
         console.log("left colibe left");
         clearInterval(timerId.current);
@@ -110,16 +134,20 @@ function App() {
       }
       // для перевірки зіткнення боком
       if (
-        wallCoordinats.left[Math.ceil(droneSize / 10 / 2) + timer] >=
-        dronePosition - Math.ceil((droneSize - 20) / 2) / 2
+        wallCoordinats.left[
+          Math.ceil((droneSize - droneOffsettoTop) / wallHight) + timer
+        ] >=
+        dronePosition - Math.ceil((droneSize - droneOffsettoTop) / 2) / 2
       ) {
         console.log("left side colibe left");
         clearInterval(timerId.current);
         setGameStatus("loss");
       }
       if (
-        wallCoordinats.right[Math.ceil(droneSize / 10 / 2) + timer] <=
-        dronePosition + Math.ceil((droneSize - 20) / 2) / 2
+        wallCoordinats.right[
+          Math.ceil((droneSize - droneOffsettoTop) / wallHight) + timer
+        ] <=
+        dronePosition + Math.ceil((droneSize - droneOffsettoTop) / 2) / 2
       ) {
         console.log("right side colibe right");
         clearInterval(timerId.current);
@@ -148,10 +176,10 @@ function App() {
       if (gameStatus == "goin")
         if (event.key === "ArrowLeft") {
           event.preventDefault();
-          setDronePosition(-7);
+          moveDrone(-7);
         } else if (event.key === "ArrowRight") {
           event.preventDefault();
-          setDronePosition(7);
+          moveDrone(7);
         } else if (event.key === "ArrowDown") {
           event.preventDefault();
           setSpeed((prev) => Math.max(20, prev - 10));
@@ -160,7 +188,7 @@ function App() {
           setSpeed((prev) => Math.min(100, prev + 10));
         }
     },
-    [gameStatus, setDronePosition, setSpeed]
+    [gameStatus, moveDrone, setSpeed]
   );
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -209,15 +237,13 @@ function App() {
   return (
     <>
       <div className="game">
-        <h2 className="gameHeading">drone game {gameStatus}</h2>
+        <h2 className="gameHeading">drone game</h2>
         <div className="gameWraper">
           <div className="screen">
             {gameStatus === "goin" || gameStatus === "loss" ? (
               <svg width={500} height={500}>
                 <polyline
-                  points={createWalls(wallCoordinats, timer)}
-                  // stroke="black"
-                  // strokeWidth="2"
+                  points={createWalls(wallCoordinats, timer, wallHight)}
                   fill="white"
                 />
                 <Drone
@@ -230,14 +256,14 @@ function App() {
             ) : null}
             {gameStatus === "loading" ? <p>loading the game...</p> : null}
             {gameStatus === "loss" ? (
-              <p className="loos">
+              <p className="loseScreen">
                 opps you loss <br />
                 <br />
                 your result:{score}
               </p>
             ) : null}
             {gameStatus === "win" ? (
-              <p>
+              <p className="winScreen">
                 congratulations you won <br />
                 <br />
                 your result:{score}
@@ -298,6 +324,16 @@ function App() {
             min={30}
             defaultValue={40}
             step={10}
+          />
+          <p>size of the walls: {wallHight}</p>
+          <input
+            value={wallHight}
+            onChange={(e) => setWallHight(+e.target.value)}
+            type="range"
+            max={15}
+            min={3}
+            defaultValue={10}
+            step={1}
           />
           <button>start game</button>
         </form>

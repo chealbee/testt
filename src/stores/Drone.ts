@@ -5,16 +5,17 @@ interface IUseDrone {
   droneWidth: number;
   droneSize: number;
   dronePosition: number;
-  setDronePosition: (position: number | "base") => void;
+  moveDrone: (position: number | "base") => void;
   setDroneSize: (size: number) => void;
+  setDronePosition: (position: number) => void;
 }
 export const useDrone = create<IUseDrone>((set) => ({
   droneOffsettoTop: 20,
   droneWidth: 20,
   dronePosition: 250,
-  droneSize: 50,
+  droneSize: 40,
 
-  setDronePosition: (position: number | "base") => {
+  moveDrone: (position: number | "base") => {
     set((state) => {
       if (position == "base") {
         return {
@@ -36,6 +37,7 @@ export const useDrone = create<IUseDrone>((set) => ({
   setDroneSize: (size: number) => {
     set({ droneSize: size });
   },
+  setDronePosition: (position: number) => set({ dronePosition: position }),
 }));
 
 /* drone pos dots left: ${dronePos - droneWidth / 2},${20}

@@ -16,28 +16,14 @@ const Drone = ({
   return (
     <polygon
       points={`${dronePosition},${droneSize} ${
-        dronePosition - (droneSize - 20) / 2
-        //   dronePosition - droneSize / 2 / 2
+        dronePosition - (droneSize - droneOffsettoTop) / 2
       },${droneOffsettoTop} ${
-        dronePosition + (droneSize - 20) / 2
+        dronePosition + (droneSize - droneOffsettoTop) / 2
       },${droneOffsettoTop}`}
       fill="black"
-      // stroke="black"
-      // strokeWidth="2"
       {...props}
     />
-    //  <polygon
-    //    points={`${dronePosition},${droneSize} ${
-    //      dronePosition - droneWidth / 2
-    //      //   dronePosition - droneSize / 2 / 2
-    //    },${droneToTop} ${dronePosition + droneWidth / 2},${droneToTop}`}
-    //    fill="black"
-    //    // stroke="black"
-    //    // strokeWidth="2"
-    //    {...props}
-    //  />
   );
 };
 
 export default Drone;
-//droneWidth = droneSize /2
