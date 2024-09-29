@@ -11,12 +11,12 @@ import { useStartGame } from "./stores/StartGame";
 import { useDrone } from "./stores/Drone";
 import { useForm } from "./stores/Form";
 import { createWalls } from "./utils/wall/createWall";
+import renderGameStatus from "./components/game/gameStatus/GameStatus";
 
 function App() {
   const timerId = useRef<number>();
   const [wallHight, setWallHight] = useState(20);
-  const [gameHight, setGameHight] = useState(500);
-  //   const [gameWidth, setGameWidth] = useState(500);
+  const [gameHight] = useState(500);
   const [gameStatus, setGameStatus] = useState<
     "goin" | "not started" | "loading" | "win" | "loss"
   >("not started");
@@ -72,18 +72,12 @@ function App() {
   ]);
 
   // перевіряємо чи не врізались в стіну
-  const checkIsColibed = useCallback(() => {
+  const checkCollision = useCallback(() => {
     if (gameStatus !== "goin") return;
     // алгротним переврки простий ми перевіряємо при "кожному" рендері
     // чи координати країв дрона, ніс дрона та боки не дорівньоють або більші\менші координатам  стіни
     // також ми перевірямо чи координати дрона не більші або менші томущо при натискані ми рухаємо
     // томущо умовно задньої частини дрона 190px а стіни 189px і ми рухаємо на 5px в ліво при настику і отримуємо 185
-
-    const stopGame = (massage: string) => {
-      clearInterval(timerId.current);
-      setGameStatus("loss");
-      console.log(massage);
-    };
 
     // ніс дрона
     const topCoordsOfDroneByY = Math.floor(droneSize / wallHight);
@@ -106,41 +100,42 @@ function App() {
         2
     );
 
-    if (wallCoordinats.left[topCoordsOfDroneByY + timer] >= dronePosition) {
-      stopGame("drone nose colibe left wall");
-    }
+    const checkCollision = (condition: boolean, text: string) => {
+      if (condition) {
+        clearInterval(timerId.current);
+        setGameStatus("loss");
+        console.log(`${text} collision`);
+      }
+    };
 
-    if (wallCoordinats.right[topCoordsOfDroneByY + timer] <= dronePosition) {
-      stopGame("drone nose colibe right wall");
-    }
-
-    if (
+    checkCollision(
+      wallCoordinats.left[topCoordsOfDroneByY + timer] >= dronePosition,
+      "drone nose colibe left wall"
+    );
+    checkCollision(
+      wallCoordinats.right[topCoordsOfDroneByY + timer] <= dronePosition,
+      "drone nose colibe right wall"
+    );
+    checkCollision(
       wallCoordinats.right[timer + leftOrRightCoordsOfDroneByY] <=
-      dronePosition + leftOrRightCoordsOfDroneByX
-    ) {
-      stopGame("drone right back colibe right wall");
-    }
-
-    if (
+        dronePosition + leftOrRightCoordsOfDroneByX,
+      "drone right back colibe right wall"
+    );
+    checkCollision(
       wallCoordinats.left[timer + leftOrRightCoordsOfDroneByY] >=
-      dronePosition - leftOrRightCoordsOfDroneByX
-    ) {
-      stopGame("drone left back colibe left wall");
-    }
-
-    if (
+        dronePosition - leftOrRightCoordsOfDroneByX,
+      "drone left back colibe left wall"
+    );
+    checkCollision(
       wallCoordinats.left[midleCoordsOfDroneByx + timer] >=
-      dronePosition - midleCoordsOfDroneByY
-    ) {
-      stopGame("drone left side colibe left wall");
-    }
-
-    if (
+        dronePosition - midleCoordsOfDroneByY,
+      "drone left side colibe left wall"
+    );
+    checkCollision(
       wallCoordinats.right[midleCoordsOfDroneByx + timer] <=
-      dronePosition + midleCoordsOfDroneByY
-    ) {
-      stopGame("drone right side colibe right wall");
-    }
+        dronePosition + midleCoordsOfDroneByY,
+      "drone right side colibe right wall"
+    );
   }, [
     dronePosition,
     droneOffsettoTop,
@@ -154,8 +149,8 @@ function App() {
 
   // викликаємо перевірку чи не врізались
   useEffect(() => {
-    checkIsColibed();
-  }, [timer, dronePosition, speed, checkIsColibed]);
+    checkCollision();
+  }, [timer, dronePosition, checkCollision]);
 
   // рухаємо дрон
   const handleKeyDown = useCallback(
@@ -194,7 +189,7 @@ function App() {
     if (gameStatus !== "goin") return;
 
     timerId.current = setInterval(() => {
-      setScore((prev) => Math.floor(prev + difficulty / (speed / 100)));
+      setScore((prev) => Math.floor(prev + difficulty / (speed / 500)));
       setTimer((prev) => prev + 1);
     }, speed);
 
@@ -205,12 +200,15 @@ function App() {
 
   // зупиняємо якщо все пролетіли (ми вигралм)
   useEffect(() => {
-    if (wallCoordinats.left.length > gameHight / wallHight) return;
-    if (timer >= wallCoordinats.left.length) return;
-
-    setGameStatus("win");
-    clearInterval(timerId.current);
+    if (
+      wallCoordinats.left.length > gameHight / wallHight &&
+      timer >= wallCoordinats.left.length
+    ) {
+      setGameStatus("win");
+      clearInterval(timerId.current);
+    }
   }, [wallCoordinats.left, timer, gameHight, wallHight]);
+  // зупиняємо якщо все пролетіли (ми вигралм)
 
   return (
     <>
@@ -238,7 +236,7 @@ function App() {
           {gameStatus === "goin" && (
             <GameDataScreen
               score={score}
-              speedY={(Math.floor((100 / speed) * 100) / 100) * 100}
+              speedY={Math.floor((100 / speed) * 100)}
             />
           )}
           {gameStatus == "not started" ||
@@ -302,30 +300,3 @@ function App() {
 }
 
 export default App;
-
-// статуси гри на екрані
-const renderGameStatus = (
-  gameStatus: "goin" | "not started" | "loading" | "win" | "loss",
-  score: number
-) => {
-  switch (gameStatus) {
-    case "loading":
-      return <p>Loading the game...</p>;
-    case "loss":
-      return (
-        <p className="loseScreen">
-          Opps, you lost <br /> Your result: {score}
-        </p>
-      );
-    case "win":
-      return (
-        <p className="winScreen">
-          Congratulations, you won! <br /> Your result: {score}
-        </p>
-      );
-    case "not started":
-      return <p>Start the game</p>;
-    default:
-      return null;
-  }
-};
