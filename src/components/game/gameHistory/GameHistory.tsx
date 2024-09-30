@@ -3,10 +3,12 @@ import { useGamehistory } from "../../../stores/GameHistoryStore";
 
 const GameHistory = () => {
   const historyList = useGamehistory((state) => state.historyList);
+
+  const sortedHistory = historyList.sort((a, b) => b.score - a.score);
   return (
     <div className="scorHistory">
       <p>game history:</p>
-      {historyList?.map((el, i) => (
+      {sortedHistory?.map((el, i) => (
         <p key={i}>
           <span>{el.name}</span>
           <span>{el.score} points</span>
