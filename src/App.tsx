@@ -110,7 +110,7 @@ function App() {
         if (animationFrameId.current)
           cancelAnimationFrame(animationFrameId.current);
         setGameStatus("loss");
-        console.log(`${text} collision`);
+        console.log(`${text}`);
       }
     };
 
