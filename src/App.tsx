@@ -23,11 +23,10 @@ function App() {
     "goin" | "not started" | "loading" | "win" | "loss"
   >("not started");
   const [timer, setTimer] = useState(0);
-  const [timerMulti, setTimerMulti] = useState(5);
-  const [speed, setSpeed] = useState(1);
+  const [timerMulti] = useState(5);
   const [score, setScore] = useState(0);
-  const [verticalSpeed, setVerticalSpeed] = useState(1);
-  const [horizontallSpeed, setHorizontallSpeed] = useState(0);
+  const [verticalSpeed, setVerticalSpeed] = useState(0);
+  const [horizontallSpeed, setHorizontallSpeed] = useState(1);
 
   const [isFormValid, setIsFormValid] = useState<boolean>(true);
   const { handleCloseModal, handleOpenModal, isModalOpen } = useModal();
@@ -49,7 +48,8 @@ function App() {
       setIsFormValid(true);
       setGameStatus("loading");
       setScore(0);
-      setSpeed(100);
+      setHorizontallSpeed(0);
+      setVerticalSpeed(1);
       setTimer(0);
       handleCloseModal();
       resetWallCoords();
@@ -140,11 +140,11 @@ function App() {
   }, [
     gameStatus,
     droneSize,
-    formData.wallHight,
+    formData,
     droneOffsettoTop,
-    wallCoordinats.left,
-    wallCoordinats.right,
+    wallCoordinats,
     timer,
+    timerMulti,
     dronePosition,
   ]);
 
@@ -178,7 +178,7 @@ function App() {
           break;
       }
     },
-    [gameStatus, moveDrone, setSpeed, formData]
+    [gameStatus]
   );
 
   useEffect(() => {
@@ -190,13 +190,23 @@ function App() {
 
   const gameLoop = useCallback(() => {
     if (gameStatus !== "goin") return;
+    setScore((prev) =>
+      parseFloat((prev + (1 - verticalSpeed) * formData.difficulty).toFixed(2))
+    );
+
     moveDrone(horizontallSpeed);
     setTimer((prev) => {
       return prev + 1 - verticalSpeed;
     });
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
-  }, [gameStatus, speed, verticalSpeed, horizontallSpeed]);
+  }, [
+    gameStatus,
+    moveDrone,
+    horizontallSpeed,
+    formData.difficulty,
+    verticalSpeed,
+  ]);
 
   useEffect(() => {
     if (gameStatus === "goin") {
@@ -220,7 +230,6 @@ function App() {
       }
     }
   }, [
-    speed,
     wallCoordinats.left,
     timer,
     gameHight,
@@ -230,12 +239,6 @@ function App() {
     gameStatus,
     timerMulti,
   ]);
-  //
-  //
-  //
-  //
-  //
-  //
 
   return (
     <>
@@ -265,7 +268,8 @@ function App() {
           {gameStatus === "goin" && (
             <GameDataScreen
               score={score}
-              speedY={Math.floor((100 / speed) * 100)}
+              speedY={Math.ceil((1 - verticalSpeed) * 10) / 10}
+              speedX={Math.ceil(horizontallSpeed * 10) / 10}
             />
           )}
           {gameStatus == "not started" ||

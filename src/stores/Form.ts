@@ -4,7 +4,6 @@ interface IUseForm {
   formData: {
     name: string;
     difficulty: number;
-    droneSpeed: number;
     wallHight: number;
     saveLost: boolean;
   };
@@ -12,7 +11,6 @@ interface IUseForm {
   setFormData: (formData: {
     name: string;
     difficulty: number;
-    droneSpeed: number;
     wallHight: number;
     saveLost: boolean;
   }) => void;
@@ -30,7 +28,6 @@ export const useForm = create<IUseForm>((set) => ({
   setFormData: (formData: {
     name: string;
     difficulty: number;
-    droneSpeed: number;
     wallHight: number;
     saveLost: boolean;
   }) => {

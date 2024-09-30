@@ -60,29 +60,6 @@ const GameForm = ({
         defaultValue={10}
         step={1}
       />
-      <p>speed of drone: {formData.droneSpeed}</p>
-      <input
-        value={formData.droneSpeed}
-        onChange={(e) =>
-          setFormData({ ...formData, droneSpeed: +e.target.value })
-        }
-        type="range"
-        max={15}
-        min={1}
-        defaultValue={7}
-        step={1}
-      />
-      {/* <div className="separator"></div>
-      <div className="row">
-        <p>save lost games for history?</p>
-        <input
-          type="checkbox"
-          checked={formData.saveLost}
-          onChange={(e) =>
-            setFormData({ ...formData, saveLost: e.target.checked })
-          }
-        />
-      </div> */}
       <button>start game</button>
     </form>
   );
