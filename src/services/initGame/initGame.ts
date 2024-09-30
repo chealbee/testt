@@ -1,6 +1,6 @@
-import { IgetUserId } from "../interfaces/initGame";
-import { getUserId } from "./initGame/getuserId";
-import { getUserToken } from "./initGame/getUserToken";
+import { IgetUserId } from "../../interfaces/initGame";
+import { getUserId } from "./getuserId";
+import { getUserToken } from "./getUserToken";
 
 interface IFormData {
   name: string;

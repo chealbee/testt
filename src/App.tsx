@@ -40,6 +40,7 @@ function App() {
     setDronePosition,
   } = useDrone();
 
+  // отримуєсо дані для гри
   const startGameIfFormValid = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData.name || !formData.difficulty) {
@@ -57,6 +58,7 @@ function App() {
     }
   };
 
+  // починаємо гру якщо є достатньо стіни
   useEffect(() => {
     if (
       wallCoordinats.left.length == Math.ceil(gameHight / formData.wallHight)
@@ -74,15 +76,29 @@ function App() {
     setDronePosition,
   ]);
 
+  // перевіряємо заткнення
   const checkCollision = useCallback(() => {
+    // алгротним переврки ми перевіряємо
+    // чи координати країв дрона, ніс дрона та боки не дорівньоють або більші\менші координатам  стіни
+    // умовно координати задньої частини дрона 190px а стіни 189px і ми рухаємо на 5px в ліво при настику і отримуємо 185
+
     if (gameStatus !== "goin") return;
 
+    // ніс дрона
     const topCoordsOfDroneByY = Math.floor(droneSize / formData.wallHight);
+
+    // задня бокова частина  (підходить для лівої і права)
     const leftOrRightCoordsOfDroneByY = Math.floor(
       droneOffsettoTop / formData.wallHight
     );
+
+    // координати від середини дрона по x (задня(верхня) бокова частина)
     const leftOrRightCoordsOfDroneByX = (droneSize - droneOffsettoTop) / 2;
+
+    // координати від середини дрона по x (середина боку дрона)
     const midleCoordsOfDroneByY = Math.ceil((droneSize - droneOffsettoTop) / 4);
+
+    // середня частина половини дрона по X (середня частина біку)
     const midleCoordsOfDroneByx = Math.floor(
       (Math.floor(droneSize / formData.wallHight) +
         Math.floor(droneOffsettoTop / formData.wallHight)) /
@@ -91,7 +107,8 @@ function App() {
 
     const checkCollision = (condition: boolean, text: string) => {
       if (condition) {
-        cancelAnimationFrame(animationFrameId.current);
+        if (animationFrameId.current)
+          cancelAnimationFrame(animationFrameId.current);
         setGameStatus("loss");
         console.log(`${text} collision`);
       }
@@ -152,6 +169,7 @@ function App() {
     checkCollision();
   }, [timer, dronePosition, checkCollision]);
 
+  // рухаємо дрон
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (gameStatus !== "goin") return;
@@ -188,6 +206,7 @@ function App() {
     };
   }, [handleKeyDown]);
 
+  // анімація і розрахунок рахунку
   const gameLoop = useCallback(() => {
     if (gameStatus !== "goin") return;
     setScore((prev) =>
@@ -208,23 +227,27 @@ function App() {
     verticalSpeed,
   ]);
 
+  // заупуск анімації
   useEffect(() => {
     if (gameStatus === "goin") {
       animationFrameId.current = requestAnimationFrame(gameLoop);
     }
 
     return () => {
-      cancelAnimationFrame(animationFrameId.current);
+      if (animationFrameId.current)
+        cancelAnimationFrame(animationFrameId.current);
     };
   }, [gameStatus, gameLoop]);
 
+  // якщо все пройшли (виграли гру)
   useEffect(() => {
     if (
       wallCoordinats.left.length > gameHight / formData.wallHight &&
       Math.floor(timer / timerMulti) >= wallCoordinats.left.length
     ) {
       setGameStatus("win");
-      cancelAnimationFrame(animationFrameId.current);
+      if (animationFrameId.current)
+        cancelAnimationFrame(animationFrameId.current);
       if (gameStatus !== "win") {
         addGameHistory(formData.name, score, formData.difficulty);
       }

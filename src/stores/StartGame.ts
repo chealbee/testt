@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { initGame } from "../services/initGame";
+import { initGame } from "../services/initGame/initGame";
 interface IFormData {
   name: string;
   difficulty: number;

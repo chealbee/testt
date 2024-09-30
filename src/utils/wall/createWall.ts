@@ -4,8 +4,6 @@ export const createWalls = (
   timer: number,
   wallHight: number
 ) => {
-  // можна зробити висоту між координатами стіни меншими але тоді печера занадто сильно кривою і дрон повинен бути дуже маленьким
-  //max 20 мфж точками по y
   const leftCoords = wallCoordinats.left.map(
     (el, i) => `${el},${i * wallHight - timer * wallHight}`
   );
@@ -18,4 +16,3 @@ export const createWalls = (
 
   return stringWall;
 };
-// створюємо стіну
